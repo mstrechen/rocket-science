@@ -37,7 +37,7 @@ const ROCKET_CONFIGURATION = {
         MOVE: 0.04,
     },
     SIDE_ENGINES_POWER_MULTIPLIER: 0.5, // main engine is *twice* as powerful as side engines
-    FUEL_CONSUMPTION: 0.0005,
+    FUEL_CONSUMPTION: 0.01,
     SPRITE: {
         ROCKET_SIZE: {
             WIDTH: 60,
@@ -89,6 +89,10 @@ class Rocket{
         //  <|-----|>  <- bottom engine
         //   =======
         //     VVV    <- main engine
+        if(this.fuelLevel <= 0){
+            topEnginePower = bottomEnginePower = 0;
+            mainEnginePower = -1;
+        }
         mainEnginePower = (mainEnginePower + 1) / 2; // projection [-1; 1] -> [0; 1]
         this.topEnginePower = topEnginePower || this.topEnginePower;
         this.bottomEnginePower = bottomEnginePower || this.bottomEnginePower;
@@ -109,7 +113,7 @@ class Rocket{
         let topEnginePower = this.topEnginePower,
             bottomEnginePower = this.bottomEnginePower,
             mainEnginePower = this.mainEnginePower;
-        this.fuelLevel -= ROCKET_CONFIGURATION.FUEL_CONSUMPTION * (
+        this.fuelLevel -= ROCKET_CONFIGURATION.FUEL_CONSUMPTION * timeDelta * (
             Math.abs(topEnginePower) + Math.abs(bottomEnginePower) + Math.abs(mainEnginePower)
         );
         this.fuelLevel = Math.max(this.fuelLevel, 0);
