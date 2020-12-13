@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <link rel="stylesheet" href="css/main.css">
+    </head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.2.5/pixi.min.js"></script>
+    <body>
+        <a href="index.html">Back</a>
+        <h4 class="info" id="epoch-counter">Epoch: 1</h4>
+        <h4 class="info" id="best-score">Best score: -</h4>
+        <table>
+            <tr>
+                <td id="simulation-1"></td>
+                <td id="simulation-2"></td>
+                <td id="simulation-3"></td>
+                <td id="simulation-4"></td>
+                <td id="simulation-5"></td>
+            </tr>
+            <tr>
+                <td id="simulation-6"></td>
+                <td id="simulation-7"></td>
+                <td id="simulation-8"></td>
+                <td id="simulation-9"></td>
+                <td id="simulation-10"></td>
+            </tr>
+            <tr>
+                <td id="simulation-11"></td>
+                <td id="simulation-12"></td>
+                <td id="simulation-13"></td>
+                <td id="simulation-14"></td>
+                <td id="simulation-15"></td>
+            </tr>
+        </table>
+        <script src="scripts/main.js"></script>
+        <script>
+            const NRS = new NaturalRocketSelection({countOfSimulations: 15,  skipFramesCount: 1});
+        </script>
+    </body>
+</html>
