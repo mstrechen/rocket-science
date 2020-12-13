@@ -564,8 +564,8 @@ class ControlableSimulation{
     }
     bindKeyboardControl(simulation){
         document.addEventListener('keydown', function (event) {
-            switch (event.key) {
-                case ' ':
+            switch (event.code) {
+                case 'Space':
                     simulation.rocket.model.setPowerLevels({mainEnginePower: 1});
                     break;
                 case 'ArrowLeft':
@@ -574,10 +574,10 @@ class ControlableSimulation{
                 case 'ArrowRight':
                     simulation.rocket.model.setPowerLevels({bottomEnginePower: -1});
                     break;
-                case 'a':
+                case 'KeyA':
                     simulation.rocket.model.setPowerLevels({topEnginePower: 1});
                     break;
-                case 'd':
+                case 'KeyD':
                     simulation.rocket.model.setPowerLevels({topEnginePower: -1});
                     break;
                 case 'Enter':
@@ -586,8 +586,8 @@ class ControlableSimulation{
             }
         });
         document.addEventListener('keyup', function (event) {
-            switch (event.key) {
-                case ' ':
+            switch (event.code) {
+                case 'Space':
                     simulation.rocket.model.setPowerLevels({mainEnginePower: -1});
                     break;
                 case 'ArrowLeft':
@@ -596,10 +596,10 @@ class ControlableSimulation{
                 case 'ArrowRight':
                     simulation.rocket.model.setPowerLevels({bottomEnginePower: 0});
                     break;
-                case 'a':
+                case 'KeyA':
                     simulation.rocket.model.setPowerLevels({topEnginePower: 0});
                     break;
-                case 'd':
+                case 'KeyD':
                     simulation.rocket.model.setPowerLevels({topEnginePower: 0});
                     break;
             }
