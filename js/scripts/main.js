@@ -476,9 +476,9 @@ class NaturalRocketSelection{
             .sort((a, b) => {
                 return b.score - a.score;
             });
-        let bound1 = this.countOfSimulations / 3,
-            bound3 = 2 * this.countOfSimulations / 3,
-            bound2 = 3 * this.countOfSimulations / 4;
+        let bound1 = Math.floor(this.countOfSimulations / 3),
+            bound3 = Math.floor(2 * this.countOfSimulations / 3),
+            bound2 = Math.floor(3 * this.countOfSimulations / 4);
 
         let best = sortedSimulations.slice(0, bound1);
         let mid1 = sortedSimulations.slice(bound1, bound2);
