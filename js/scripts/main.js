@@ -207,7 +207,7 @@ class Simulation{
         this.onRenderCallback = function({rocket, state}){};
         this.onEndCallback = function({totalTime}){};
 
-        let app = new PIXI.Application({width: width * scale, height: height * scale, backgroundColor : 0x1099bb});
+        let app = new PIXI.Application({width: width * scale, height: height * scale, backgroundColor : 0x1099bb, forceCanvas: true});
         app.stage.scale.x = scale;
         app.stage.scale.y = scale;
 
@@ -304,7 +304,7 @@ class Simulation{
 }
 
 class RocketController{
-    static CONFIG = {
+    CONFIG = {
         INPUT_SIZE: 9,
         OUTPUT_SIZE: 3,
         MIDDLE_LAYER_SIZES: [10, 15, 9, 6] // [15, 20, 10],
@@ -374,18 +374,18 @@ class RocketController{
     getRandomBrain(){
         let res = [];
         res.push(this.getRandomLayer([
-            RocketController.CONFIG.INPUT_SIZE + 1,
-            RocketController.CONFIG.MIDDLE_LAYER_SIZES[0]
+            this.CONFIG.INPUT_SIZE + 1,
+            this.CONFIG.MIDDLE_LAYER_SIZES[0]
         ]));
-        for(let i = 1; i < RocketController.CONFIG.MIDDLE_LAYER_SIZES.length; i++){
+        for(let i = 1; i < this.CONFIG.MIDDLE_LAYER_SIZES.length; i++){
             res.push(this.getRandomLayer([
-                RocketController.CONFIG.MIDDLE_LAYER_SIZES[i - 1] + 1,
-                RocketController.CONFIG.MIDDLE_LAYER_SIZES[i],
+                this.CONFIG.MIDDLE_LAYER_SIZES[i - 1] + 1,
+                this.CONFIG.MIDDLE_LAYER_SIZES[i],
             ]));
         }
         res.push(this.getRandomLayer([
-            RocketController.CONFIG.MIDDLE_LAYER_SIZES[RocketController.CONFIG.MIDDLE_LAYER_SIZES.length - 1] + 1,
-            RocketController.CONFIG.OUTPUT_SIZE,
+            this.CONFIG.MIDDLE_LAYER_SIZES[this.CONFIG.MIDDLE_LAYER_SIZES.length - 1] + 1,
+            this.CONFIG.OUTPUT_SIZE,
         ]));
 
         return res;
