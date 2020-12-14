@@ -37,7 +37,7 @@ const ROCKET_CONFIGURATION = {
         MOVE: 0.04,
     },
     SIDE_ENGINES_POWER_MULTIPLIER: 0.5, // main engine is *twice* as powerful as side engines
-    FUEL_CONSUMPTION: 0.01,
+    FUEL_CONSUMPTION: 0.1,
     SPRITE: {
         ROCKET_SIZE: {
             WIDTH: 60,
@@ -254,11 +254,16 @@ class Simulation{
         this.onEndCallback({totalTime});
     }
     simulate(timeDelta){
+        let skipFramesCount = 1;
         if(this.useRealTime)
             timeDelta *= PIXI.settings.TARGET_FPMS / PHYSICS.TIME_MULTIPLIER;
-        else
-            timeDelta = PHYSICS.TIME_STEP ;
+        else {
+            // Trick to avoid lag for large amount of simulations
+            skipFramesCount *= Math.floor(Math.max(timeDelta, 1));
+            timeDelta = PHYSICS.TIME_STEP;
+        }
         timeDelta /=  PHYSICS.TIME_MULTIPLIER;
+
         for(let i = 0; i < this.skipFramesCount; i++) {
             this.onRenderCallback({rocket: this.rocket, state: this.getSimulationState()});
             if (this.failed) return;
@@ -311,9 +316,10 @@ class RocketController{
     CONFIG = {
         INPUT_SIZE: 9,
         OUTPUT_SIZE: 3,
-        MIDDLE_LAYER_SIZES: [10, 15, 9, 6] // [15, 20, 10],
+        MIDDLE_LAYER_SIZES: [10, 15, 9, 6]
     };
-    constructor({brain}){
+    constructor({brain, NNArchitecture}){
+        this.NNArchitecture = NNArchitecture || this.CONFIG.MIDDLE_LAYER_SIZES;
         this.brain = brain || this.getRandomBrain();
     }
     replaceBrain(brain){
@@ -379,16 +385,16 @@ class RocketController{
         let res = [];
         res.push(this.getRandomLayer([
             this.CONFIG.INPUT_SIZE + 1,
-            this.CONFIG.MIDDLE_LAYER_SIZES[0]
+            this.NNArchitecture[0]
         ]));
-        for(let i = 1; i < this.CONFIG.MIDDLE_LAYER_SIZES.length; i++){
+        for(let i = 1; i < this.NNArchitecture.length; i++){
             res.push(this.getRandomLayer([
-                this.CONFIG.MIDDLE_LAYER_SIZES[i - 1] + 1,
-                this.CONFIG.MIDDLE_LAYER_SIZES[i],
+                this.NNArchitecture[i - 1] + 1,
+                this.NNArchitecture[i],
             ]));
         }
         res.push(this.getRandomLayer([
-            this.CONFIG.MIDDLE_LAYER_SIZES[this.CONFIG.MIDDLE_LAYER_SIZES.length - 1] + 1,
+            this.NNArchitecture[this.NNArchitecture.length - 1] + 1,
             this.CONFIG.OUTPUT_SIZE,
         ]));
 
@@ -421,21 +427,26 @@ class RocketController{
 }
 
 class NaturalRocketSelection{
-    constructor({countOfSimulations, scale, skipFramesCount}){
+    constructor({
+                    countOfSimulations, NNArchitecture,
+                    createVisualizationOuterElement, scale, skipFramesCount,
+                    epochCounterElement, bestScoreElement,
+    }){
         skipFramesCount = skipFramesCount || 1;
         this.countOfSimulations = countOfSimulations || 1;
         this.simulations = new Array(countOfSimulations);
         this.activeSimulations = countOfSimulations;
         scale = scale || STYLES.SCREENS.SMALL_SCALE;
-        this.epochCounter = document.getElementById('epoch-counter');
-        this.bestScore = document.getElementById('best-score');
+        this.epochCounter = epochCounterElement;
+        this.bestScore = bestScoreElement;
+        this.NNArchitecture = NNArchitecture;
 
         this.epoch = 1;
         for(let i = 0; i < countOfSimulations; i++){
-            let element = document.getElementById(`simulation-${i + 1}`);
+            let element = createVisualizationOuterElement(i);
             this.simulations[i] = {
                 score: 0,
-                controller: new RocketController({}),
+                controller: new RocketController({NNArchitecture: this.NNArchitecture}),
                 index: i,
                 simulation: new Simulation({
                     element,
@@ -535,8 +546,8 @@ class NaturalRocketSelection{
         this.activeSimulations = this.countOfSimulations - best.length;
 
         this.epoch++;
-        this.epochCounter.innerText = INTERFACE.TEXTS.EPOCH + this.epoch;
-        this.bestScore.innerText = INTERFACE.TEXTS.BEST_SCORE + best[0].score.toFixed(2);
+        this.epochCounter.innerText = this.epoch;
+        this.bestScore.innerText = best[0].score.toFixed(2);
         this.start();
     }
     saveBrains(){
