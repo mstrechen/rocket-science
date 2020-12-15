@@ -37,7 +37,7 @@ const ROCKET_CONFIGURATION = {
         MOVE: 0.04,
     },
     SIDE_ENGINES_POWER_MULTIPLIER: 0.5, // main engine is *twice* as powerful as side engines
-    FUEL_CONSUMPTION: 0.1,
+    FUEL_CONSUMPTION: 0.3,
     SPRITE: {
         ROCKET_SIZE: {
             WIDTH: 60,
@@ -147,6 +147,15 @@ class Rocket{
 
 const rocketTexture = PIXI.Texture.from('img/rocket.png');
 const fireTexture = PIXI.Texture.from('img/fire.png');
+const fuelBarrelTexture = PIXI.Texture.from('img/fuel.png');
+
+function getBarrelSprite() {
+    let barrel = new PIXI.Sprite(fuelBarrelTexture);
+    barrel.anchor.set(0.5);
+    barrel.width = 40;
+    barrel.height = 40;
+    return barrel;
+}
 
 function getFireSprite(rotation, x, y, width, height) {
     let fire = new PIXI.Sprite(fireTexture);
@@ -210,6 +219,7 @@ class Simulation{
         this.skipFramesCount = skipFramesCount || 1;
         this.onRenderCallback = function({rocket, state}){};
         this.onEndCallback = function({totalTime}){};
+        this.barrelsCollected = 0;
 
         let app = new PIXI.Application({width: width * scale, height: height * scale, backgroundColor : 0x1099bb, forceCanvas: true});
         app.stage.scale.x = scale;
@@ -223,6 +233,9 @@ class Simulation{
             sprite: undefined,
         };
         this.rocket.sprite = getRocketSprite(this.rocket.position);
+        this.fuelBarrel = getBarrelSprite();
+        this.resetBarrel();
+
         this.fuelText = new PIXI.Text(INTERFACE.TEXTS.FUEL_LEVEL, STYLES.TEXT.SMALL);
 
         let self = this;
@@ -232,6 +245,8 @@ class Simulation{
 
         app.stage.addChild(this.fuelText);
         app.stage.addChild(this.rocket.sprite);
+        app.stage.addChild(this.fuelBarrel);
+
         element.appendChild(this.app.view);
         this.stop();
     }
@@ -277,6 +292,10 @@ class Simulation{
             ) {
                 this.endSimulation();
             }
+            if(this.barrelAndRocketCollide()){
+                this.resetBarrel();
+                this.rocket.model.fuelLevel = 1;
+            }
             this.syncSpriteAndModel();
             this.rocket.sprite.updateFireLevels(this.rocket.model.getPowerLevels());
         }
@@ -292,7 +311,30 @@ class Simulation{
             this.rocket.model.rotationVelocity,
             this.rocket.model.rotation,
             this.rocket.model.fuelLevel,
+            (this.fuelBarrel.position.x - this.rocket.position.x) / this.width,
+            (this.fuelBarrel.position.y - this.rocket.position.y) / this.height,
         ]
+    }
+    SUPER_UNPREDICTABLE_SEQ_01 = [1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0];
+    SUPER_UNPREDICTABLE_SEQ_012 = [2, 1, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2];
+    resetBarrel(){
+        this.barrelsCollected += 1;
+        let barrelPos = this.getNextBarrelPosition();
+        console.log(barrelPos);
+
+        this.fuelBarrel.position.set(barrelPos.x, barrelPos.y);
+    }
+    getNextBarrelPosition(){
+        return {
+            x: this.width * 0.2 + this.width * 0.6 * this.SUPER_UNPREDICTABLE_SEQ_012[this.barrelsCollected % 12] / 2,
+            y: this.height * 0.2 + this.height * 0.6 * this.SUPER_UNPREDICTABLE_SEQ_01[this.barrelsCollected % 12],
+        }
+    }
+    barrelAndRocketCollide(){
+        return Math.sqrt(
+            (this.rocket.position.x - this.fuelBarrel.position.x) * (this.rocket.position.x - this.fuelBarrel.position.x) +
+            (this.rocket.position.y - this.fuelBarrel.position.y) * (this.rocket.position.y - this.fuelBarrel.position.y)
+        ) < 40;
     }
     reset(){
         this.rocket.position = {x: this.width / 2, y: this.height / 2};
@@ -303,6 +345,8 @@ class Simulation{
         if(this.failedText){
             this.failedText.visible = false;
         }
+        this.barrelsCollected = 0;
+        this.resetBarrel();
     }
     start(){
         this.app.start();
@@ -314,9 +358,9 @@ class Simulation{
 
 class RocketController{
     CONFIG = {
-        INPUT_SIZE: 9,
+        INPUT_SIZE: 11,
         OUTPUT_SIZE: 3,
-        MIDDLE_LAYER_SIZES: [10, 15, 9, 6]
+        MIDDLE_LAYER_SIZES: [12, 15, 9, 6]
     };
     constructor({brain, NNArchitecture}){
         this.NNArchitecture = NNArchitecture || this.CONFIG.MIDDLE_LAYER_SIZES;

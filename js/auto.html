@@ -63,8 +63,13 @@
                       </div>
                       <div class="form-group">
                           <label for="NNArchitecture">Neural network architecture</label>
-                          <input id="NNArchitecture" name="NNArchitecture"  type="text" class="form-control" placeholder="10,15,9,6">
+                          <input id="NNArchitecture" name="NNArchitecture"  type="text" class="form-control" placeholder="12,15,9,6">
                           <small class="form-text text-muted">Comma-separated list of natural numbers, each corresponds to the layer size</small>
+                      </div>
+                      <div class="form-group">
+                          <label for="skipFramesCount">Simulation speed</label>
+                          <input id="skipFramesCount" name="skipFramesCount"  type="number" min="1" max="500" class="form-control" placeholder="1">
+                          <small class="form-text text-muted">Set this to the higher level if the evolution takes too long</small>
                       </div>
                       <div class="form-group">
                           <button type="submit" class="btn btn-primary" id="apply-btn">Apply</button>
@@ -83,12 +88,13 @@
         <script>
             let searchParams = new URLSearchParams(window.location.search);
             let countOfSimulations = searchParams.get('countOfSimulations') || 16;
-            let NNArchitecture = searchParams.get('NNArchitecture') || '10,15,9,6';
+            let NNArchitecture = searchParams.get('NNArchitecture') || '12,15,9,6';
+            let skipFramesCount = searchParams.get('skipFramesCount') || 1;
             NNArchitecture = NNArchitecture.replace(' ', '').split(',')
                 .map(x => parseInt(x))
                 .filter(x => x && !isNaN(x) && x > 0)
                 .map(x => Math.round(x));
-            let config = {NNArchitecture, countOfSimulations};
+            let config = {NNArchitecture, countOfSimulations, skipFramesCount};
 
             const createVisualizationOuterElement = function () {
                 let element = $('<div class="col-md-auto p-1 bg-dark mb-2 d-flex justify-content-center rounded" ></div>');
@@ -97,8 +103,6 @@
             };
             const NRS = new NaturalRocketSelection({
                 ...config,
-
-                skipFramesCount: 1,
                 createVisualizationOuterElement,
                 epochCounterElement: $('#epoch-counter').get(0),
                 bestScoreElement: $('#best-score').get(0),
