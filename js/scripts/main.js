@@ -37,7 +37,7 @@ const ROCKET_CONFIGURATION = {
         MOVE: 0.04,
     },
     SIDE_ENGINES_POWER_MULTIPLIER: 0.5, // main engine is *twice* as powerful as side engines
-    FUEL_CONSUMPTION: 0.3,
+    FUEL_CONSUMPTION: 0.1,
     SPRITE: {
         ROCKET_SIZE: {
             WIDTH: 60,
@@ -315,7 +315,7 @@ class Simulation{
             (this.fuelBarrel.position.y - this.rocket.position.y) / this.height,
         ]
     }
-    SUPER_UNPREDICTABLE_SEQ_01 = [1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0];
+    SUPER_UNPREDICTABLE_SEQ_01 = [1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0];
     SUPER_UNPREDICTABLE_SEQ_012 = [2, 1, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2];
     resetBarrel(){
         this.barrelsCollected += 1;
@@ -326,7 +326,7 @@ class Simulation{
     getNextBarrelPosition(){
         return {
             x: this.width * 0.2 + this.width * 0.6 * this.SUPER_UNPREDICTABLE_SEQ_012[this.barrelsCollected % 12] / 2,
-            y: this.height * 0.3 + this.height * 0.4 * this.SUPER_UNPREDICTABLE_SEQ_01[this.barrelsCollected % 12],
+            y: this.height * 0.55 + this.height * 0.1 * this.SUPER_UNPREDICTABLE_SEQ_01[this.barrelsCollected % 12],
         }
     }
     barrelAndRocketCollide(){
