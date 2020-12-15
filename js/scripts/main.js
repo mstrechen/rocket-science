@@ -22,6 +22,7 @@ const INTERFACE = {
         SIMULATION_IS_OVER: 'Simulation is over\n(rocket has been destroyed)\nTotal time: ',
         EPOCH: 'Epoch: ',
         BEST_SCORE: 'Best score: ',
+        TOTAL_TIME: 'total time: ',
     },
 
 };
@@ -237,6 +238,8 @@ class Simulation{
         this.resetBarrel();
 
         this.fuelText = new PIXI.Text(INTERFACE.TEXTS.FUEL_LEVEL, STYLES.TEXT.SMALL);
+        this.totalTimeText = new PIXI.Text(INTERFACE.TEXTS.TOTAL_TIME, STYLES.TEXT.SMALL);
+        this.totalTimeText.position.set(0, 36);
 
         let self = this;
         app.ticker.add(function (timeDelta) {
@@ -244,6 +247,7 @@ class Simulation{
         });
 
         app.stage.addChild(this.fuelText);
+        app.stage.addChild(this.totalTimeText)
         app.stage.addChild(this.rocket.sprite);
         app.stage.addChild(this.fuelBarrel);
 
@@ -255,6 +259,7 @@ class Simulation{
         this.rocket.sprite.position.set(x, y);
         this.rocket.sprite.rotation = this.rocket.model.rotation;
         this.fuelText.text = INTERFACE.TEXTS.FUEL_LEVEL + (this.rocket.model.fuelLevel * 100).toFixed(3);
+        this.totalTimeText.text = INTERFACE.TEXTS.TOTAL_TIME + (this.totalTime).toFixed(2);
     }
     endSimulation(){
         this.failed = true;
