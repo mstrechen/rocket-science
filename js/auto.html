@@ -25,6 +25,10 @@
                             <td><h4>Best score:</h4></td>
                             <td><h4 id="best-score">-</h4></td>
                         </tr>
+                        <tr>
+                            <td><h4>Simulation speed:</h4></td>
+                            <td><h4 id="simulation-speed">-</h4></td>
+                        </tr>
                     </table>
                 </div>
                 <table class="ml-auto mr-3">
@@ -39,6 +43,9 @@
                         </td>
                     </tr>
                 </table>
+            </div>
+            <div>
+                <input type="range" min="1" max="500" class="form-control-range" id="simulationSpeed">
             </div>
             <div class="container">
                 <div class="row justify-content-around" id="all-visualizations"></div>
@@ -107,11 +114,19 @@
                 epochCounterElement: $('#epoch-counter').get(0),
                 bestScoreElement: $('#best-score').get(0),
             });
+            $('#simulation-speed').text(skipFramesCount);
+            $('#simulationSpeed').val(skipFramesCount);
+
+            $('#simulationSpeed').change(() => {
+                let newSpeed = $('#simulationSpeed').val();
+                $('#simulation-speed').text(newSpeed);
+                NRS.changeSimulationSpeed(newSpeed);
+            });
 
             for(let key in config)
-            if(config.hasOwnProperty(key)){
-                $(`#${key}`).val(config[key]);
-            }
+                if(config.hasOwnProperty(key)){
+                    $(`#${key}`).val(config[key]);
+                }
         </script>
     </body>
 </html>

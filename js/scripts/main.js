@@ -320,14 +320,13 @@ class Simulation{
     resetBarrel(){
         this.barrelsCollected += 1;
         let barrelPos = this.getNextBarrelPosition();
-        console.log(barrelPos);
 
         this.fuelBarrel.position.set(barrelPos.x, barrelPos.y);
     }
     getNextBarrelPosition(){
         return {
             x: this.width * 0.2 + this.width * 0.6 * this.SUPER_UNPREDICTABLE_SEQ_012[this.barrelsCollected % 12] / 2,
-            y: this.height * 0.2 + this.height * 0.6 * this.SUPER_UNPREDICTABLE_SEQ_01[this.barrelsCollected % 12],
+            y: this.height * 0.3 + this.height * 0.4 * this.SUPER_UNPREDICTABLE_SEQ_01[this.barrelsCollected % 12],
         }
     }
     barrelAndRocketCollide(){
@@ -583,11 +582,14 @@ class NaturalRocketSelection{
         }
 
         for(let i = 0; i < this.countOfSimulations; i++){
-            if(best.indexOf(this.simulations[i]) !== -1)
-                continue;
+            // TODO: make this optimization optional
+            // if(best.indexOf(this.simulations[i]) !== -1)
+            //     continue;
             this.simulations[i].simulation.reset();
         }
-        this.activeSimulations = this.countOfSimulations - best.length;
+        // TODO: make this optimization optional
+        // this.activeSimulations = this.countOfSimulations - best.length;
+        this.activeSimulations = this.countOfSimulations
 
         this.epoch++;
         this.epochCounter.innerText = this.epoch;
@@ -605,6 +607,11 @@ class NaturalRocketSelection{
             a.click();
         }
         download(brains, 'json.txt', 'text/plain');
+    }
+    changeSimulationSpeed(newSpeed){
+        this.simulations.map(simulation => {
+                simulation.simulation.skipFramesCount = newSpeed;
+        });
     }
 }
 
