@@ -30,15 +30,15 @@ const INTERFACE = {
 const PHYSICS = {
     G: 9.81,  // Gravitational acceleration
     TIME_MULTIPLIER: 3,
-    TIME_STEP: 0.05,
+    TIME_STEP: 0.06,
 };
 const ROCKET_CONFIGURATION = {
     INERTIA: {
-        ROTATION: 0.05,
+        ROTATION: 3,
         MOVE: 0.04,
     },
     SIDE_ENGINES_POWER_MULTIPLIER: 0.5, // main engine is *twice* as powerful as side engines
-    FUEL_CONSUMPTION: 0.1,
+    FUEL_CONSUMPTION: 0.008,
     SPRITE: {
         ROCKET_SIZE: {
             WIDTH: 60,
@@ -137,11 +137,10 @@ class Rocket{
         }
         accelerationY -= PHYSICS.G;
 
-        this.velocityX += accelerationX;
-        this.velocityY += accelerationY;
+        this.velocityX += timeDelta * accelerationX;
+        this.velocityY += timeDelta * accelerationY;
         this.rotation += timeDelta * this.rotationVelocity;
         this.rotation = this.rotation % (2 * Math.PI);
-
         return {velocityX: this.velocityX, velocityY: this.velocityY};
     }
 }
@@ -274,20 +273,19 @@ class Simulation{
         this.onEndCallback({totalTime});
     }
     simulate(timeDelta){
-        let skipFramesCount = 1;
+        let skipFramesCount = this.skipFramesCount;
         if(this.useRealTime)
-            timeDelta *= PIXI.settings.TARGET_FPMS / PHYSICS.TIME_MULTIPLIER;
+            timeDelta *= PIXI.settings.TARGET_FPMS;
         else {
             // Trick to avoid lag for large amount of simulations
             skipFramesCount *= Math.floor(Math.max(timeDelta, 1));
             timeDelta = PHYSICS.TIME_STEP;
         }
-        timeDelta /=  PHYSICS.TIME_MULTIPLIER;
 
-        for(let i = 0; i < this.skipFramesCount; i++) {
+        for(let i = 0; i < skipFramesCount; i++) {
             this.onRenderCallback({rocket: this.rocket, state: this.getSimulationState()});
             if (this.failed) return;
-            this.totalTime += timeDelta * PHYSICS.TIME_MULTIPLIER;
+            this.totalTime += timeDelta;
             this.rocket.model.simulate({timeDelta});
             this.rocket.position.x -= timeDelta * this.rocket.model.velocityX;
             this.rocket.position.y -= timeDelta * this.rocket.model.velocityY;
