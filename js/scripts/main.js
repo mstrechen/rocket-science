@@ -209,6 +209,12 @@ function getRocketSprite({x, y}) {
 }
 
 class Simulation{
+    DEFAULT_CHARACTERISTICS = {
+        totalTime: 0,
+        fuelBarrelsCollected: 0,
+        minDistanceToBarrel: Infinity,
+        lastDistanceToBarrel: 0,
+    };
     constructor({element, width, height, scale, useRealTime, skipFramesCount}){
         this.width = width;
         this.height = height;
@@ -218,8 +224,11 @@ class Simulation{
         this.useRealTime = useRealTime || false;
         this.skipFramesCount = skipFramesCount || 1;
         this.onRenderCallback = function({rocket, state}){};
-        this.onEndCallback = function({totalTime}){};
+        this.onEndCallback = function({characteristics}){};
         this.barrelsCollected = 0;
+        this.characteristics = {
+            ...this.DEFAULT_CHARACTERISTICS,
+        };
 
         let app = new PIXI.Application({width: width * scale, height: height * scale, backgroundColor : 0x1099bb, forceCanvas: true});
         app.stage.scale.x = scale;
@@ -246,12 +255,24 @@ class Simulation{
         });
 
         app.stage.addChild(this.fuelText);
-        app.stage.addChild(this.totalTimeText)
+        app.stage.addChild(this.totalTimeText);
         app.stage.addChild(this.rocket.sprite);
         app.stage.addChild(this.fuelBarrel);
 
         element.appendChild(this.app.view);
         this.stop();
+    }
+    syncCharacteristics(){
+        let lastDistanceToBarrel = Math.sqrt(
+            Math.pow(this.fuelBarrel.position.x - this.rocket.position.x, 2) +
+            Math.pow(this.fuelBarrel.position.y - this.rocket.position.y, 2)
+        );
+        this.characteristics = {
+            totalTime: this.totalTime,
+            fuelBarrelsCollected: this.barrelsCollected - 1,
+            minDistanceToBarrel: Math.min(lastDistanceToBarrel, 1.01 * this.characteristics.minDistanceToBarrel),
+            lastDistanceToBarrel: lastDistanceToBarrel,
+        }
     }
     syncSpriteAndModel(){
         let {x, y} = this.rocket.position;
@@ -270,7 +291,7 @@ class Simulation{
         this.failedText.anchor.set(0.5);
         this.failedText.position.set(this.width / 2, this.height / 2);
         this.app.stage.addChild(this.failedText);
-        this.onEndCallback({totalTime});
+        this.onEndCallback({characteristics: this.characteristics});
     }
     simulate(timeDelta){
         let skipFramesCount = this.skipFramesCount;
@@ -299,6 +320,7 @@ class Simulation{
                 this.resetBarrel();
                 this.rocket.model.fuelLevel = 1;
             }
+            this.syncCharacteristics();
             this.syncSpriteAndModel();
             this.rocket.sprite.updateFireLevels(this.rocket.model.getPowerLevels());
         }
@@ -318,10 +340,12 @@ class Simulation{
             (this.fuelBarrel.position.y - this.rocket.position.y) / this.height,
         ]
     }
-    SUPER_UNPREDICTABLE_SEQ_01 = [1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0];
-    SUPER_UNPREDICTABLE_SEQ_012 = [2, 1, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2];
+    SUPER_UNPREDICTABLE_SEQ_01 = [1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1];
+    SUPER_UNPREDICTABLE_SEQ_012 = [1, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2, 2];
     resetBarrel(){
         this.barrelsCollected += 1;
+        this.characteristics.minDistanceToBarrel = Infinity;
+
         let barrelPos = this.getNextBarrelPosition();
 
         this.fuelBarrel.position.set(barrelPos.x, barrelPos.y);
@@ -349,6 +373,7 @@ class Simulation{
         }
         this.barrelsCollected = 0;
         this.resetBarrel();
+        this.characteristics = {...this.DEFAULT_CHARACTERISTICS};
     }
     start(){
         this.app.start();
@@ -394,9 +419,9 @@ class RocketController{
             brain = this.copyBrain(brain);
             for(let i = 0; i < brain.length; i++){
                 let shape = brain[i].shape;
-                for(let j = 0; j < shape[0]; j++)
+                for(let k = 0; k < shape[1]; k++)
                     if(Math.random() < aggressiveness)
-                    for(let k = 0; k < shape[1]; k++)
+                    for(let j = 0; j < shape[0]; j++)
                         brain[i].set(j, k, brain[i].get() * (1 - macChange) + (Math.random()*2 - 1)*macChange)
             }
         }
@@ -524,8 +549,25 @@ class NaturalRocketSelection{
     }
     bindSimulationOver(simulation, index) {
         let self = this;
-        simulation.onEndCallback = function ({totalTime}) {
-            self.simulations[index].score = totalTime;
+        simulation.onEndCallback = function ({characteristics}) {
+            console.log(characteristics);
+            let scoreParts = {
+                totalTime: characteristics.totalTime,
+                minDistanceToBarrel: 300 / Math.pow(characteristics.minDistanceToBarrel - 35, 1),
+                fuelBarrelsCollected: characteristics.fuelBarrelsCollected * 5,
+            };
+            scoreParts = {
+                totalTime: Math.pow(characteristics.totalTime , 0.75) * 10,
+                minDistanceToBarrel: 800 / Math.pow(characteristics.minDistanceToBarrel - 35, 0.8),
+                fuelBarrelsCollected: Math.pow(characteristics.fuelBarrelsCollected * 30, 1.1)
+            };
+            let score = 0;
+            for (let key in scoreParts){
+                score += scoreParts[key];
+            }
+
+            self.simulations[index].score = score;
+            self.simulations[index].scoreParts = scoreParts;
             self.activeSimulations--;
             if (self.activeSimulations === 0)
                 self.onAllSimulationsEnd();
@@ -592,12 +634,22 @@ class NaturalRocketSelection{
         }
         // TODO: make this optimization optional
         // this.activeSimulations = this.countOfSimulations - best.length;
-        this.activeSimulations = this.countOfSimulations
+        this.activeSimulations = this.countOfSimulations;
 
         this.epoch++;
         this.epochCounter.innerText = this.epoch;
-        this.bestScore.innerText = best[0].score.toFixed(2);
+        this.bestScore.innerText = this.getBestScore(best[0].scoreParts);
         this.start();
+    }
+    getBestScore(scoreParts){
+        console.log(scoreParts);
+        let res = '';
+        for(let key in scoreParts){
+            if(res.length)
+                res += ', ';
+            res += `${key} ${scoreParts[key]}`;
+        }
+        return res;
     }
     saveBrains(){
         let brains = this.simulations.map(simulation => simulation.controller.brain.map(layer => layer.tolist()));
